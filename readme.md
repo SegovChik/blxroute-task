@@ -13,7 +13,7 @@ I made it in a different way, accepting the http log from containers, and pushin
 it was useful for me, it might be useful for you too:) 
 
 But also here is a template for a literally completed task
-
+```xml
 #####################
 ### Read log file
 <source>
@@ -51,15 +51,17 @@ But also here is a template for a literally completed task
     </buffer>
   </store>
 </match>
+```
 
 Task 2
 Please create a log rotate script that rotates every 1 hour and has a history of 5 hours
 
 Create file /etc/logrotate.d/application
-
+```bash  
 /var/log/application.log {
   hourly
   notifempty
   missingok
   rotate 5
 }
+```
