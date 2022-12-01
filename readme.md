@@ -1,6 +1,6 @@
 This repository contains terraform code to describe a minimalistic infrastructure of two servers, one for the logging system, the other for the etx node, and a description of the security groups for them.Also a simple ansible configuration to deploy all software.
 
-Task 1
+## Task 1
 We need to load part of the geth logs to s3 central log repository (elastic for example). We want to use fluentd or logstash to read the geth log file and extract only the relevant rows. 
 You need to create the fluentd / logstash configuration that:
 1. read the geth log - the source can be a local file that geth writes log records to
@@ -9,7 +9,7 @@ You need to create the fluentd / logstash configuration that:
 * Writing clean trie cache to disk
 all other log records should not be in the output file(s) 
 
-I made it in a different way, accepting the http log from containers, and pushing filtered logs to grafana loki.
+I made it in a different [way](https://github.com/SegovChik/blxroute-task/blob/main/ansible/env/test/group_vars/eth/vars.yml), accepting the http log from containers, and pushing filtered logs to grafana loki.
 it was useful for me, it might be useful for you too:) 
 
 But also here is a template for a literally completed task
@@ -53,7 +53,7 @@ But also here is a template for a literally completed task
 </match>
 ```
 
-Task 2
+## Task 2
 Please create a log rotate script that rotates every 1 hour and has a history of 5 hours
 
 Create file /etc/logrotate.d/application
