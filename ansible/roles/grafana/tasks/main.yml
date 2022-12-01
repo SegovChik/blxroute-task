@@ -1,0 +1,81 @@
+---
+- name: Install packages
+  apt:
+    name:
+      - docker.io
+      - python3-docker
+      - python3-apt
+      - python3-pip
+      - unattended-upgrades
+      - nginx
+    cache_valid_time: 86400
+
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  loop:
+    - "{{ grafana_dir }}"
+    - "{{ grafana_dir }}/provisioning/datasources"
+    - "{{ grafana_data }}"
+
+- name: Copy config files
+  copy:
+    src: datasource.yml
+    dest: "{{ grafana_dir }}/provisioning/datasources/datasource.yml"
+    mode: 0644
+  notify: reload grafana
+
+- name: Create granafa.ini
+  copy:
+    src: grafana.ini
+    dest: "{{ grafana_dir }}/grafana.ini"
+    mode: 0644
+  notify: reload grafana
+
+- name: Flush_handlers
+  meta: flush_handlers
+
+- name: Create docker network
+  docker_network:
+    name: monitoring
+
+- name: Start grafana container
+  docker_container:
+    image: grafana/grafana
+    name: grafana
+    restart_policy: unless-stopped
+    networks_cli_compatible: yes
+    user: root
+    networks:
+      - name: monitoring
+    ports:
+      - 127.0.0.1:3000:3000
+    volumes:
+      - "{{ grafana_dir }}:/etc/grafana"
+      - "{{ grafana_data }}:/var/lib/grafana"
+    env:
+      GF_SERVER_ROOT_URL: "https://{{ grafana_url }}"
+
+- name: Health check
+  uri:
+    url: http://127.0.0.1:3000/api/health
+  register: health_check_grafana
+  retries: 30
+  delay: 1
+  until: health_check_grafana.status == 200
+
+- name: Copy nginx config
+  template:
+    src: nginx.conf
+    dest: /etc/nginx/sites-available/grafana
+    mode: 0644
+  notify: reload grafana nginx
+
+- name: Enable nginx config
+  file:
+    src: /etc/nginx/sites-available/grafana
+    dest: /etc/nginx/sites-enabled/grafana
+    state: link
+  notify: reload grafana nginx

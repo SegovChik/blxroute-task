@@ -1,0 +1,26 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: Install packages
+      apt:
+        name:
+          - nginx
+
+    - name: Set storage-driver to vfs
+      copy:
+        content: |
+          {
+            "storage-driver": "vfs"
+          }
+        dest: /etc/docker/daemon.json
+      register: docker_config
+      notify: restart docker
+
+  handlers:
+    - name: Restart docker daemon
+      listen: restart docker
+      systemd:
+        name: docker
+        state: restarted
+      when: docker_config.changed

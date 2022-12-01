@@ -1,0 +1,88 @@
+---
+- name: Install packages
+  apt:
+    name:
+      - docker.io
+      - python3-docker
+      - python3-apt
+      - python3-pip
+      - unattended-upgrades
+      - nginx
+    cache_valid_time: 86400
+
+- name: Create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  loop:
+    - "{{ loki_dir }}"
+    - "{{ loki_data }}"
+    - "{{ loki_index_dir }}"
+    - "{{ loki_chunks_dir }}"
+    - "{{ loki_cache_dir }}"
+    - "{{ loki_config_dir }}"
+
+- name: Install passlib python package
+  pip:
+    name: passlib
+
+- name: Copy loki config file
+  template:
+    src: loki-config.yml.j2
+    dest: "{{ loki_config_dir }}/config.yml"
+    mode: 0644
+
+- name: Ensure docker network exists
+  docker_network:
+    name: monitoring
+
+- name: Start loki container
+  docker_container:
+    name: loki
+    image: "{{ loki_image }}"
+    pull: yes
+    restart_policy: unless-stopped
+    networks_cli_compatible: yes
+    command: -config.file={{ loki_config_dir }}/config.yml
+    user: root
+    networks:
+      - name: monitoring
+    published_ports:
+      - 127.0.0.1:3100:3100
+    volumes:
+      - "{{ loki_config_dir }}:{{ loki_config_dir }}"
+      - "{{ loki_data }}:{{ loki_data }}"
+
+- name: Health check
+  uri:
+    url: "{{ loki_check_url }}"
+    status_code: "200"
+    return_content: yes
+  register: result
+  retries: 60
+  delay: 2
+  until: result is success
+
+- name: Create http password
+  htpasswd:
+    path: /etc/nginx/.loki_http_password
+    name: loki
+    password: "{{ loki_http_password }}"
+    owner: root
+    group: www-data
+    mode: 0640
+
+- name: Copy nginx config
+  template:
+    src: nginx.conf
+    dest: /etc/nginx/sites-available/loki
+    mode: 0644
+  notify: reload loki nginx
+
+- name: Enable nginx config
+  file:
+    src: /etc/nginx/sites-available/loki
+    dest: /etc/nginx/sites-enabled/loki
+    state: link
+  notify: reload loki nginx

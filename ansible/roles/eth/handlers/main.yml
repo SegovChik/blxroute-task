@@ -1,0 +1,6 @@
+---
+- name: Restart geth service
+  listen: restart geth service
+  systemd:
+    name: geth
+    state: restarted

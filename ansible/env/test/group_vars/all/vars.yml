@@ -1,0 +1,4 @@
+---
+jwt_secret_value: "{{ vault_jwt_secret_vaule }}"
+loki_username: "{{ vault_loki_username }}"
+loki_http_password: "{{ vault_loki_http_password }}"

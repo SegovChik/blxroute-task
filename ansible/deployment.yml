@@ -1,0 +1,31 @@
+---
+- name: Set up logging system
+  hosts: monitoring
+  become: yes
+  tasks:
+    - name: Import grafana role
+      import_role:
+        name: grafana
+      vars:
+        - grafana_url: bloxroute-grafana.inc4.net
+
+    - name: Import loki role
+      import_role: 
+        name: loki
+      vars:
+        - loki_url: bloxroute-loki.inc4.net
+
+- name: Set up eth node
+  hosts: eth
+  become: yes
+  tasks:
+    - name: Import fluentd role
+      vars:
+        fluentd_version: 4
+        fluentd_plugins: fluent-plugin-grafana-loki
+      import_role: 
+        name: geerlingguy.fluentd
+
+    - name: Import geth role
+      import_role:
+        name: eth

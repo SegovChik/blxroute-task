@@ -1,0 +1,17 @@
+---
+geth_image: "ethereum/client-go"
+geth_image_tag: "v1.10.26"
+
+prysm_image: "gcr.io/prysmaticlabs/prysm/beacon-chain"
+prysm_image_tag: "v3.1.2"
+
+eth_docker_network_name: "ethereum"
+blockchain_network: "sepolia"
+blockchain_datadir: "/data/ethereum"
+jwt_secret_path: "{{ blockchain_datadir }}/jwt.hex"
+
+geth_datadir: "{{ blockchain_datadir }}/geth"
+prysm_datadir: "{{ blockchain_datadir }}/prysm"
+
+geth_container_name: "geth"
+prysm_container_name: "prysm"

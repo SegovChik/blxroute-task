@@ -1,0 +1,6 @@
+---
+- name: Reload nginx
+  listen: reload loki nginx
+  systemd:
+    name: nginx
+    state: reloaded

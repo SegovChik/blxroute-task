@@ -1,0 +1,11 @@
+---
+- name: Reload
+  listen: reload grafana
+  command: docker kill -s HUP grafana
+  failed_when: false
+
+- name: Reload nginx
+  listen: reload grafana nginx
+  systemd:
+    name: nginx
+    state: reloaded

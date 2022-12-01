@@ -1,0 +1,69 @@
+---
+- name: Install packages
+  apt:
+    name:
+      - docker.io
+      - python3-docker
+      - python3-apt
+      - python3-pip
+      - unattended-upgrades
+      - gnupg2
+    cache_valid_time: 86400
+
+- name: Create datadirs
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  with_items: 
+    - "{{ blockchain_datadir }}"
+    - "{{ geth_datadir }}"
+    - "{{ prysm_datadir }}"
+
+- name: Create jwt.hex file 
+  lineinfile:
+    path: "{{ jwt_secret_path }}"
+    line: "{{ jwt_secret_value }}"
+    create: yes
+    mode: "0644"
+
+- name: Create docker network
+  docker_network:
+    name: "{{ eth_docker_network_name }}"
+
+- name: Start geth container
+  docker_container: 
+    image: "{{ geth_image }}:{{ geth_image_tag }}"
+    name: "{{ geth_container_name }}"
+    restart_policy: unless-stopped
+    networks_cli_compatible: yes
+    command: --"{{ blockchain_network }}" --datadir "{{ geth_datadir }}" --http --http.api eth,net,engine,admin --authrpc.jwtsecret "{{ jwt_secret_path }}" --verbosity 3 --override.terminaltotaldifficulty 17000000000000000
+    log_driver: fluentd
+    networks: 
+      - name: "{{ eth_docker_network_name }}"
+    ports: 
+      - "30303:30303/tcp"
+      - "30303:30303/udp"
+      - "30301:30301/tcp"
+      - "30301:30301/udp"
+      - "127.0.0.1:8545:8545"
+      - "127.0.0.1:8546:8546"
+    volumes:
+      - "{{ blockchain_datadir }}:{{ blockchain_datadir }}"
+      - "{{ geth_datadir }}:{{ geth_datadir }}"
+
+- name: Start Prysm container
+  docker_container: 
+    image: "{{ prysm_image }}:{{ prysm_image_tag }}"
+    name: "{{ prysm_container_name }}"
+    restart_policy: unless-stopped
+    networks_cli_compatible: yes
+    command: --"{{ blockchain_network }}" --datadir={{ prysm_datadir }} --execution-endpoint=/data/ethereum/geth/geth.ipc --jwt-secret="{{ jwt_secret_path }}" --accept-terms-of-use --checkpoint-sync-url=https://sepolia.beaconstate.info --genesis-beacon-api-url=https://sepolia.beaconstate.info
+    ports: 
+      - "13000:13000/tcp"
+      - "12000:12000/udp"
+    networks: 
+      - name: "{{ eth_docker_network_name }}"
+    volumes:
+      - "{{ blockchain_datadir }}:{{ blockchain_datadir }}"
+      - "{{ prysm_datadir }}:{{ prysm_datadir }}"

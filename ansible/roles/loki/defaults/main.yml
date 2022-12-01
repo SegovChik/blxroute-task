@@ -1,0 +1,14 @@
+---
+loki_dir: /opt/loki
+loki_data: /opt/loki-data
+loki_index_dir: "{{ loki_data }}/index"
+loki_chunks_dir: "{{ loki_data }}/chunks"
+loki_cache_dir: "{{ loki_data }}/boltdb-cache"
+loki_retention_dir: "{{ loki_data }}"
+loki_config_dir: /etc/loki
+loki_check_url: "http://127.0.0.1:3100/ready"
+loki_url: "loki"
+loki_http_password: "loremipsumdolor"
+loki_image_name: grafana/loki
+loki_image_tag: "2.4.2"
+loki_image: "{{ loki_image_name }}:{{ loki_image_tag }}"

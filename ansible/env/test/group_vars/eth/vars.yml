@@ -1,0 +1,27 @@
+fluentd_conf_sources: |
+  <source>
+    @type forward
+    port 24224
+    bind 127.0.0.1
+  </source>
+
+fluentd_conf_filters: |
+  <filter docker.*>
+    @type grep
+    <regexp>
+      key log
+      pattern ( * Persisted the clean trie cache | * Writing clean trie cache to disk)
+    </regexp>
+  </filter>
+
+fluentd_conf_matches: |
+  <match **>
+    @type loki
+    url "https://bloxroute-loki.inc4.net"
+    username "{{ loki_username }}"
+    password "{{ loki_http_password }}"
+    extra_labels {"env":"example"}
+    flush_interval 10s
+    flush_at_shutdown true
+    buffer_chunk_limit 1m
+  </match>
